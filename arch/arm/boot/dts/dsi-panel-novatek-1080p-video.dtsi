@@ -1,0 +1,80 @@
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+&soc {
+
+	qcom,mdss_dsi_novatek_1080p_video {
+		compatible = "qcom,mdss-dsi-panel";
+		label = "novatek 1080p video mode dsi panel";
+		status = "disable";
+		qcom,dsi-ctrl-phandle = <&mdss_dsi0>;
+		qcom,enable-gpio = <&msmgpio 58 0>;
+		qcom,rst-gpio = <&pm8941_gpios 19 0>;
+		qcom,mdss-pan-res = <1200 1920>;
+		qcom,mdss-pan-bpp = <24>;
+		qcom,mdss-pan-dest = "display_1";
+		qcom,mdss-pan-porch-values = <16 24 32 25 2 10>;
+		qcom,mdss-pan-underflow-clr = <0xff>;
+		qcom,mdss-pan-bl-ctrl = "bl_ctrl_wled";
+		qcom,mdss-pan-bl-levels = <1 255>;
+		qcom,mdss-pan-dsi-mode = <0>;
+		qcom,mdss-pan-dsi-h-pulse-mode = <0>;
+		qcom,mdss-pan-dsi-h-power-stop = <0 0 0>;
+		qcom,mdss-pan-dsi-bllp-power-stop = <1 1>;
+		qcom,mdss-pan-dsi-traffic-mode = <1>;
+		qcom,mdss-pan-dsi-dst-format = <3>;
+		qcom,mdss-pan-dsi-vc = <0>;
+		qcom,mdss-pan-dsi-rgb-swap = <0>;
+		qcom,mdss-pan-dsi-data-lanes = <1 1 1 1>;
+		qcom,mdss-pan-dsi-dlane-swap = <0>;
+		qcom,mdss-pan-dsi-t-clk = <0x2c 0x3>;
+		qcom,mdss-pan-dsi-stream = <0>;
+		qcom,mdss-pan-dsi-mdp-tr = <0x0>;
+		qcom,mdss-pan-dsi-dma-tr = <0x04>;
+		qcom,mdss-pan-frame-rate = <60>;
+		qcom,panel-phy-regulatorSettings = [07 09 03 00  /* Regualotor settings */
+						    20 00 01];
+		qcom,panel-phy-timingSettings = [ef 38 25 00 67 70
+						    29 3c 2c 03 04 00];
+		qcom,panel-phy-strengthCtrl = [ff 06];
+		qcom,panel-phy-bistCtrl = [00 00 b1 ff           /* BIST Ctrl settings */
+					   00 00];
+		qcom,panel-phy-laneConfig = [00 00 00 00 00 00 00 01 97 /* lane0 config */
+					     00 00 00 00 05 00 00 01 97 /* lane1 config */
+					     00 00 00 00 0a 00 00 01 97 /* lane2 config */
+					     00 00 00 00 0f 00 00 01 97 /* lane3 config */
+					     00 c0 00 00 00 00 00 01 bb]; /* Clk ln config */
+
+		qcom,panel-on-cmds = [32 01 00 00 05 00 02 00 00	/* peripheral on, change the delay from 100 to 5ms */
+                                      23 00 00 00 00 00 02 f3 a8 	/* unlock page 8 */
+                                      23 00 00 00 00 00 02 7a 2b		/* 0x87a = 2b, this and below relate to garbage screen */
+                                      23 00 00 00 00 00 02 7b 63		/* 0x87b = 63 */
+                                      23 00 00 00 00 00 02 7c 0d		/* 0x87c = 0d */
+                                      23 00 00 00 00 00 02 7e 60		/* 0x87e = 60 */
+                                      23 00 00 00 00 00 02 80 00		/* 0x880 = 00 */
+                                      23 00 00 00 00 00 02 81 00		/* 0x881 = 00 */
+                                      03 01 00 00 01 00 00 	  	/* lock page 8 */
+                                      23 00 00 00 00 00 02 f3 a1	/* unlock page 1 */
+                                      23 00 00 00 00 00 02 53 80 		/* 0x153 = 80 */
+                                      03 01 00 00 01 00 00      ]; 	/* lock page 1 */
+		qcom,on-cmds-dsi-state = "DSI_LP_MODE";
+		qcom,panel-off-cmds = [22 01 00 00 05 00 02 00 00];
+		qcom,off-cmds-dsi-state = "DSI_HS_MODE";
+		qcom,mdss-backlight-reinit = <1>;
+		qcom,mdss-pan-psr-mode;
+		qcom,panel-psr-on-cmds = [15 01 00 00 10 00 02 c2 0b
+					  15 01 00 00 00 00 02 c2 00];
+		qcom,psr-on-cmds-dsi-state = "DSI_HS_MODE";
+		qcom,panel-psr-off-cmds = [15 01 00 00 00 00 02 c2 03];
+		qcom,psr-off-cmds-dsi-state = "DSI_HS_MODE";
+	};
+};

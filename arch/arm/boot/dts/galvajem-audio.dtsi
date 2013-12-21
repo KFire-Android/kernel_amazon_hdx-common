@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/include/ "skeleton.dtsi"
+
+/ {
+	i2c@f9968000 { /* BLSP#12 */
+	        max97236@40 {
+			compatible = "maxim,max97236";
+			reg = <0x40>;
+			interrupt-parent = <&msmgpio>; /* GPIO handler */
+			interrupts = <50 0x2>; /* GPIO will be converted to gpio_irq */
+			maxim,irq-gpio = <&msmgpio 50 0x00>; /* Pass a GPIO */
+
+			vdd_hp_mux-supply = <&pm8941_l18>;
+		};
+	};
+
+	sound {
+		qcom,model = "msm8974-taiko-tablet-snd-card";
+
+	      };
+};
+
+&pm8841_mpps {
+	mpp@a000 { /* MPP 1 */
+	        /* CLASS_D_EN speakers PA */
+	        qcom,mode = <1>; /* DIG_OUT */
+	        qcom,output-type = <0>;  /* PNP_PIN_OUT_BUF_CMOS */
+	        qcom,vin-sel = <2>; /* S3A 1.8v */
+	        qcom,src-select = <0>; /* CONSTANT */
+	        qcom,master-en = <1>; /* ENABLE MPP */
+	};
+};
+
+&pm8941_gpios {
+	gpio@cf00 { /* GPIO 16 */
+		qcom,mode = <1>;  /* Digital output */
+		qcom,output-type = <0>; /* CMOS logic */
+		qcom,pull = <5>;
+		qcom,vin-sel = <2>;
+		qcom,out-strength = <3>;
+		qcom,src-sel = <2>;
+		qcom,master-en = <1>;
+	};
+};
+
+&spmi_bus {
+	qcom,pm8941@0 {
+		pm8941_clkdiv2: clkdiv@5c00 {
+			qcom,cxo-div = <1>;
+		};
+	};
+};

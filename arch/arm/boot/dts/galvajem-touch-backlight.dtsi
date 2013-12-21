@@ -1,0 +1,56 @@
+/*
+ * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 and
+ * only version 2 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/include/ "skeleton.dtsi"
+
+/ {
+	i2c@f9924000 {
+		cell-index = <2>;
+		compatible = "qcom,i2c-qup";
+		reg = <0xf9924000 0x1000>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg-names = "qup_phys_addr";
+		interrupts = <0 96 0>;
+		interrupt-names = "qup_err_intr";
+		qcom,i2c-bus-freq = <400000>;
+		qcom,i2c-src-freq = <19200000>;
+	};
+		
+	i2c@f9924000 {
+		cypress_ttsp4_i2c@67 {
+			compatible = "cypress,ttsp4";
+			reg = <0x67>;
+			interrupt-parent = <&msmgpio>;
+			interrupts = <61 0x2>;
+			cypress,reset-gpio = <&msmgpio 60 0x00>;
+			cypress,irq-gpio = <&msmgpio 61 0x01>;
+		};
+	};
+		
+
+	i2c@f9924000 {			
+		lp8557@2C  {
+			compatible = "ti,lp855x";
+			vcc_i2c-supply = <&pm8941_lvs1>;
+			reg = <0x2C>;
+			ti,lp855x-en-gpio = <&msmgpio 58 0x00>;
+			ti,lp855x-device-control = <65>;
+			ti,lp855x-mode = <2>;
+			ti,lp855x-initial-brightness = <0x65>;
+			ti,lp855x-load-new-rom-data = <1>;
+			ti,lp855x-size-program = <2>;
+			ti,lp855x-rom-data = <0x14 0xCF>;
+		};	
+	};
+};
