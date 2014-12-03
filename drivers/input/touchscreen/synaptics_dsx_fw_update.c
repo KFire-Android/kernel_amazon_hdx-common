@@ -260,7 +260,7 @@ struct synaptics_rmi4_fwu_handle {
 static struct bin_attribute dev_attr_data = {
 	.attr = {
 		.name = "data",
-		.mode = (S_IRUGO | S_IWUGO),
+		.mode = (S_IRUGO | S_IWUSR),
 	},
 	.size = 0,
 	.read = fwu_sysfs_show_image,
@@ -268,19 +268,19 @@ static struct bin_attribute dev_attr_data = {
 };
 
 static struct device_attribute attrs[] = {
-	__ATTR(doreflash, S_IWUGO,
+	__ATTR(doreflash, S_IWUSR,
 			synaptics_rmi4_show_error,
 			fwu_sysfs_do_reflash_store),
-	__ATTR(writeconfig, S_IWUGO,
+	__ATTR(writeconfig, S_IWUSR,
 			synaptics_rmi4_show_error,
 			fwu_sysfs_write_config_store),
-	__ATTR(readconfig, S_IWUGO,
+	__ATTR(readconfig, S_IWUSR,
 			synaptics_rmi4_show_error,
 			fwu_sysfs_read_config_store),
-	__ATTR(configarea, S_IWUGO,
+	__ATTR(configarea, S_IWUSR,
 			synaptics_rmi4_show_error,
 			fwu_sysfs_config_area_store),
-	__ATTR(imagesize, S_IWUGO,
+	__ATTR(imagesize, S_IWUSR,
 			synaptics_rmi4_show_error,
 			fwu_sysfs_image_size_store),
 	__ATTR(blocksize, S_IRUGO,

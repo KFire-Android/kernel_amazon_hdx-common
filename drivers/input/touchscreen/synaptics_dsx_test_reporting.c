@@ -85,7 +85,7 @@ static ssize_t concat(synaptics_rmi4_f54, _##propname##_store)(\
 		const char *buf, size_t count);\
 \
 struct device_attribute dev_attr_##propname =\
-		__ATTR(propname, S_IWUGO,\
+		__ATTR(propname, S_IWUSR,\
 		synaptics_rmi4_show_error,\
 		concat(synaptics_rmi4_f54, _##propname##_store));
 
@@ -101,7 +101,7 @@ static ssize_t concat(synaptics_rmi4_f54, _##propname##_store)(\
 		const char *buf, size_t count);\
 \
 struct device_attribute dev_attr_##propname =\
-		__ATTR(propname, (S_IRUGO | S_IWUGO),\
+		__ATTR(propname, (S_IRUGO | S_IWUSR),\
 		concat(synaptics_rmi4_f54, _##propname##_show),\
 		concat(synaptics_rmi4_f54, _##propname##_store));
 

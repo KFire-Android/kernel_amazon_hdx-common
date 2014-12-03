@@ -3561,12 +3561,13 @@ static struct crypto_alg _qcrypto_aead_ccm_algo = {
 	}
 };
 
+struct crypto_priv *cp;
 
 static int  _qcrypto_probe(struct platform_device *pdev)
 {
 	int rc = 0;
 	void *handle;
-	struct crypto_priv *cp;
+
 	int i;
 	struct msm_ce_hw_support *platform_support;
 
@@ -3798,9 +3799,33 @@ err:
 
 static int  _qcrypto_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	if (qseecom_created_key_flag == true)
+	if (qseecom_created_key_flag == true) {
+		int ret = 0;
+		mutex_lock(&qcrypto_sent_bw_req);
+		if (cp->high_bw_req == true) {
+			del_timer_sync(&(cp->bw_scale_down_timer));
+			ret = msm_bus_scale_client_update_request(
+					cp->bus_scale_handle, 0);
+			if (ret) {
+				pr_err("%s Unable to set to low bandwidth\n",
+							__func__);
+				return ret;
+			}
+			ret = qce_disable_clk(cp->qce);
+			if (ret) {
+				pr_err("%s Unable disable clk\n", __func__);
+				ret = msm_bus_scale_client_update_request(
+					cp->bus_scale_handle, 1);
+				if (ret)
+					pr_err("%s Unable to set to high bandwidth\n",
+							__func__);
+				return ret;
+			}
+		}
+		mutex_unlock(&qcrypto_sent_bw_req);
 		qce_suspend(((struct crypto_priv *)
 					platform_get_drvdata(pdev))->qce);
+	}
 	return 0;
 }
 
@@ -3808,14 +3833,32 @@ static int  _qcrypto_resume(struct platform_device *pdev)
 {
 	if (qseecom_created_key_flag == true) {
 		int ret = 0;
-		uint8_t hash32[32] = {0};
 
-		ret = qseecom_create_key_kclient(
-			QSEOS_KM_USAGE_DISK_ENCRYPTION, hash32);
-		if (ret) {
-			pr_err("create key error in _qcrypto_resume.\n");
-			return ret;
+		mutex_lock(&qcrypto_sent_bw_req);
+		if (cp->high_bw_req == true) {
+			ret = qce_enable_clk(cp->qce);
+			if (ret) {
+				pm_relax(&cp->pdev->dev);
+				pr_err("%s Unable enable clk\n", __func__);
+				return ret;
+			}
+			ret = msm_bus_scale_client_update_request(
+				cp->bus_scale_handle, 1);
+			if (ret) {
+				pr_err("%s Unable to set to high bandwidth\n",
+						__func__);
+				qce_disable_clk(cp->qce);
+				return ret;
+			}
+
+			cp->bw_scale_down_timer.data =
+				(unsigned long)(cp);
+			cp->bw_scale_down_timer.expires = jiffies +
+			msecs_to_jiffies(QCRYPTO_HIGH_BANDWIDTH_TIMEOUT);
+			add_timer(&(cp->bw_scale_down_timer));
 		}
+		mutex_unlock(&qcrypto_sent_bw_req);
+
 		qce_resume(((struct crypto_priv *)
 				platform_get_drvdata(pdev))->qce);
 	}
