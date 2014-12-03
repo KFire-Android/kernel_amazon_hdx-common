@@ -1473,7 +1473,7 @@ static int max97236_pm_resume(struct device *dev)
 
 	max97236->jack_state = M97236_JACK_STATE_NONE;
 	if (test_jack_presence(max97236, 10))
-		snd_soc_jack_report(max97236->jack, max97236->jack_state, 0x7E00000);
+		snd_soc_jack_report(max97236->jack, max97236->jack_state, SND_JACK_HEADSET | SND_JACK_LINEOUT);
 
 	dev_info(max97236->codec->dev, "resume exit\n");
 
