@@ -216,6 +216,8 @@ extern int bq27541_get_property_backdoor(
 #define BMS1_EN_CTL			0x4046
 #define BMS_EN				BIT(7)
 
+#define ENUM_T_STOP_BIT		BIT(0)
+
 struct qpnp_chg_irq {
 	unsigned int		irq;
 	unsigned long		disabled;
@@ -446,6 +448,7 @@ qpnp_chg_masked_write(struct qpnp_chg_chip *chip, u16 base,
 	return 0;
 }
 
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
 static void
 qpnp_chg_enable_irq(struct qpnp_chg_irq *irq)
 {
@@ -463,6 +466,7 @@ qpnp_chg_disable_irq(struct qpnp_chg_irq *irq)
 		disable_irq_nosync(irq->irq);
 	}
 }
+#endif
 
 #define USB_OTG_EN_BIT	BIT(0)
 static int
@@ -817,6 +821,8 @@ qpnp_bat_if_adc_measure_work(struct work_struct *work)
 		pr_err("request ADC error\n");
 }
 
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
+
 #define EOC_CHECK_PERIOD_MS	10000
 static irqreturn_t
 qpnp_chg_vbatdet_lo_irq_handler(int irq, void *_chip)
@@ -866,7 +872,6 @@ qpnp_chg_usb_chg_gone_irq_handler(int irq, void *_chip)
 	return IRQ_HANDLED;
 }
 
-#define ENUM_T_STOP_BIT		BIT(0)
 static irqreturn_t
 qpnp_chg_usb_usbin_valid_irq_handler(int irq, void *_chip)
 {
@@ -1006,6 +1011,8 @@ qpnp_chg_chgr_chg_fastchg_irq_handler(int irq, void *_chip)
 
 	return IRQ_HANDLED;
 }
+
+#endif
 
 static int
 qpnp_dc_property_is_writeable(struct power_supply *psy,
@@ -1964,6 +1971,8 @@ static struct regulator_ops qpnp_chg_boost_reg_ops = {
 	.list_voltage		= qpnp_chg_regulator_boost_list_voltage,
 };
 
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
+
 #define MIN_DELTA_MV_TO_INCREASE_VDD_MAX	13
 #define MAX_DELTA_VDD_MAX_MV			30
 static void
@@ -2083,6 +2092,8 @@ stop_eoc:
 	count = 0;
 	wake_unlock(&chip->eoc_wake_lock);
 }
+
+#endif
 
 #define HYSTERISIS_DECIDEGC 20
 static void
@@ -2224,6 +2235,7 @@ qpnp_chg_setup_flags(struct qpnp_chg_chip *chip)
 		chip->flags |= BOOST_FLASH_WA;
 }
 
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
 static int
 qpnp_chg_request_irqs(struct qpnp_chg_chip *chip)
 {
@@ -2421,6 +2433,7 @@ qpnp_chg_request_irqs(struct qpnp_chg_chip *chip)
 
 	return rc;
 }
+#endif
 
 #define WDOG_EN_BIT	BIT(7)
 static int
@@ -3178,7 +3191,9 @@ qpnp_charger_probe(struct spmi_device *spmi)
 
 	wake_lock_init(&chip->eoc_wake_lock,
 		WAKE_LOCK_SUSPEND, "qpnp-chg-eoc-lock");
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
 	INIT_DELAYED_WORK(&chip->eoc_work, qpnp_eoc_work);
+#endif
 	INIT_DELAYED_WORK(&chip->arb_stop_work, qpnp_arb_stop_work);
 
 	if (chip->dc_chgpth_base) {
@@ -3254,6 +3269,8 @@ qpnp_charger_probe(struct spmi_device *spmi)
 	qpnp_chg_schedule_snapshot(chip);
 	device_create_file(&spmi->dev, &dev_attr_snapshot_seconds);
 #endif
+
+#if !defined(CONFIG_ARCH_MSM8974_THOR) && !defined(CONFIG_ARCH_MSM8974_APOLLO)
 	rc = qpnp_chg_request_irqs(chip);
 	if (rc) {
 		pr_err("failed to request interrupts %d\n", rc);
@@ -3262,6 +3279,7 @@ qpnp_charger_probe(struct spmi_device *spmi)
 
 	qpnp_chg_usb_usbin_valid_irq_handler(USBIN_VALID_IRQ, chip);
 	qpnp_chg_dc_dcin_valid_irq_handler(DCIN_VALID_IRQ, chip);
+#endif
 	power_supply_set_present(chip->usb_psy,
 			qpnp_chg_is_usb_chg_plugged_in(chip));
 
