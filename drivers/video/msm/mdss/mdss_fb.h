@@ -154,6 +154,7 @@ struct msm_fb_data_type {
 	struct completion commit_comp;
 	u32 is_committing;
 	bool is_commit_allowed;
+	u32 shut_down_signalled;
 	struct work_struct commit_work;
 	void *msm_fb_backup;
 	struct completion power_set_comp;
