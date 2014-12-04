@@ -838,8 +838,10 @@ static void adreno_iommu_setstate(struct kgsl_device *device,
 	num_iommu_units = kgsl_mmu_get_num_iommu_units(&device->mmu);
 
 	context = idr_find(&device->context_idr, context_id);
-	if (context == NULL)
+	if (context == NULL) {
+		kgsl_mmu_device_setstate(&device->mmu, KGSL_CONTEXT_INVALID);
 		return;
+	}
 
 	kgsl_context_get(context);
 

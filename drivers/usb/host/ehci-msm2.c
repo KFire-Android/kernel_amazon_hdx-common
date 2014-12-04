@@ -1209,6 +1209,14 @@ static int msm_ehci_bus_resume(struct usb_hcd *hcd)
 	return 0;
 }
 
+static void ehci_set_autosuspend_delay(struct usb_device *dev)
+{
+	if (!dev->parent) /* no delay for RH */
+		pm_runtime_set_autosuspend_delay(&dev->dev, 0);
+	else
+		pm_runtime_set_autosuspend_delay(&dev->dev, 4000);
+}
+
 static struct hc_driver msm_hc2_driver = {
 	.description		= hcd_name,
 	.product_desc		= "Qualcomm EHCI Host Controller",
@@ -1253,6 +1261,7 @@ static struct hc_driver msm_hc2_driver = {
 	 */
 	.bus_suspend		= ehci_bus_suspend,
 	.bus_resume		= msm_ehci_bus_resume,
+	.set_autosuspend_delay  = ehci_set_autosuspend_delay,
 };
 
 static int msm_ehci_init_clocks(struct msm_hcd *mhcd, u32 init)

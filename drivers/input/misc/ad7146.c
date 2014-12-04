@@ -536,12 +536,12 @@ static ssize_t store_reg_read(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_reg_read(struct device *dev,
 	struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(reg_read, S_IRWXUGO, show_reg_read, store_reg_read);
+static DEVICE_ATTR(reg_read, S_IRUGO | S_IWUSR, show_reg_read, store_reg_read);
 /*--------------------------------------------------------------*/
 /*--------------------------------------------------------------*/
 static ssize_t store_reg_write(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
-static  DEVICE_ATTR(reg_write, S_IRWXUGO, NULL, store_reg_write);
+static  DEVICE_ATTR(reg_write, S_IRUGO | S_IWUSR, NULL, store_reg_write);
 /*--------------------------------------------------------------*/
 
 /*--------------------------------------------------------------*/
@@ -549,7 +549,7 @@ static ssize_t store_temp_comp(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_temp_comp(struct device *dev,
 	struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(temp_comp, S_IRWXUGO, show_temp_comp, store_temp_comp);
+static DEVICE_ATTR(temp_comp, S_IRUGO | S_IWUSR, show_temp_comp, store_temp_comp);
 /*--------------------------------------------------------------*/
 
 #ifdef SENSOR_ACTIVE_ON
@@ -558,30 +558,30 @@ static ssize_t store_intr_mode(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_intr_mode(struct device *dev,
 	struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(intr_mode, S_IRWXUGO, show_intr_mode, store_intr_mode);
+static DEVICE_ATTR(intr_mode, S_IRUGO | S_IWUSR, show_intr_mode, store_intr_mode);
 /*--------------------------------------------------------------*/
 #endif
 #endif
 /*--------------------------------------------------------------*/
 static ssize_t redo_filp_calib(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
-static DEVICE_ATTR(filp_config, S_IRWXUGO, NULL, redo_filp_calib);
+static DEVICE_ATTR(filp_config, S_IRUGO | S_IWUSR, NULL, redo_filp_calib);
 /*--------------------------------------------------------------*/
 static ssize_t store_stage_info(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_stage_info(struct device *dev,
 	struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(stage_info, S_IRWXUGO, show_stage_info, store_stage_info);
+static DEVICE_ATTR(stage_info, S_IRUGO | S_IWUSR, show_stage_info, store_stage_info);
 /*--------------------------------------------------------------*/
 static ssize_t do_calibrate(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count);
-static DEVICE_ATTR(calibrate, S_IRWXUGO, NULL, do_calibrate);
+static DEVICE_ATTR(calibrate, S_IRUGO | S_IWUSR, NULL, do_calibrate);
 /*--------------------------------------------------------------*/
 static ssize_t store_status(struct device *dev,
                             struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_status(struct device *dev,
                            struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(status, S_IRWXUGO, show_status, store_status);
+static DEVICE_ATTR(status, S_IRUGO | S_IWUSR, show_status, store_status);
 static int ad7146_enable(struct ad7146_chip *ad7146);
 static int ad7146_disable(struct ad7146_chip *ad7146);
 /*--------------------------------------------------------------*/
@@ -589,11 +589,11 @@ static ssize_t do_autotune(struct device *dev,
                            struct device_attribute *attr, const char *buf, size_t count);
 static ssize_t show_autotune(struct device *dev,
                            struct device_attribute *attr, char *buf);
-static DEVICE_ATTR(autotune, S_IRWXUGO, show_autotune, do_autotune);
+static DEVICE_ATTR(autotune, S_IRUGO | S_IWUSR, show_autotune, do_autotune);
 /*--------------------------------------------------------------*/
 static ssize_t do_davetune(struct device *dev,
                            struct device_attribute *attr, const char *buf, size_t count);
-static DEVICE_ATTR(davetune, S_IRWXUGO, show_autotune, do_davetune);
+static DEVICE_ATTR(davetune, S_IRUGO | S_IWUSR, show_autotune, do_davetune);
 /*--------------------------------------------------------------*/
 static struct attribute *ad7146_sysfs_entries[] = {
 	&dev_attr_reg_read.attr,

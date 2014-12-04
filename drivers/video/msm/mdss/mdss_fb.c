@@ -242,6 +242,9 @@ static void mdss_fb_remove_sysfs(struct msm_fb_data_type *mfd)
 static void mdss_fb_shutdown(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd = platform_get_drvdata(pdev);
+	mutex_lock(&mfd->lock);
+	mfd->shut_down_signalled = 1;
+	mutex_unlock(&mfd->lock);
 
 	lock_fb_info(mfd->fbi);
 	mdss_fb_release_all(mfd->fbi, true);
@@ -1102,6 +1105,11 @@ static int mdss_fb_open(struct fb_info *info, int user)
 
 	if (!mfd->ref_cnt) {
 		mutex_lock(&mfd->lock);
+		if (mfd->index == 0 && mfd->shut_down_signalled) {
+			pr_err("FB open after shut down for fb0!!\n");
+			mutex_unlock(&mfd->lock);
+			return -EPERM;
+		}
 		mfd->is_commit_allowed = true;
 		mutex_unlock(&mfd->lock);
 		result = mdss_fb_blank_sub(FB_BLANK_UNBLANK, info,
@@ -1272,7 +1280,9 @@ static void mdss_fb_pan_idle(struct msm_fb_data_type *mfd)
 {
 	int ret;
 
+	mutex_lock(&mfd->sync_mutex);
 	if (mfd->is_committing) {
+		mutex_unlock(&mfd->sync_mutex);
 		ret = wait_for_completion_timeout(
 				&mfd->commit_comp,
 			msecs_to_jiffies(WAIT_DISP_OP_TIMEOUT));
@@ -1288,6 +1298,8 @@ static void mdss_fb_pan_idle(struct msm_fb_data_type *mfd)
 			complete_all(&mfd->commit_comp);
 			mutex_unlock(&mfd->sync_mutex);
 		}
+	} else {
+		mutex_unlock(&mfd->sync_mutex);
 	}
 }
 

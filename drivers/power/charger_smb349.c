@@ -83,6 +83,7 @@
 #define SMB349_CHG_TIMEOUT_MIN  0x00
 
 #define SMB349_IS_APSD_DONE(value)	((value) & (1 << 6))
+#define SMB349_IS_POWER_OK(value) ((value) & (1 << 0))
 
 #define SMB349_APSD_RESULT_OTHER	(1 << 0)
 #define SMB349_APSD_RESULT_SDP		(1 << 1)
@@ -122,6 +123,8 @@
 #define SMB349_INTSTAT_D_CHG_TIMEOUT		(1<<1)
 #define SMB349_INTSTAT_D_APSD_CMPL		(1<<7)
 #define SMB349_INTSTAT_D_AICL_CMPL		(1<<5)
+#define SMB349_INTSTAT_E_UV			(1<<1)
+#define SMB349_INTSTAT_E_UV_STATUS		(1<<0)
 
 enum {
 	SMB349_USB_MODE_1,
@@ -156,7 +159,6 @@ struct smb349_priv {
 	atomic_t suspended;
 	int handle_irq;
 };
-
 /* DEBUG */
 //#define SMB349_DEBUG
 
@@ -341,12 +343,13 @@ static int smb349_config_fixup(struct smb349_priv *priv)
 {
 	int ret = -1, i = 0;
 	int fixup_values[] = {
-		0x7a, 0x61, 0xb7, 0xed,
-		0x38, 0x14, 0x7a, 0xcf,
-		  -1, 0x00, 0x54, 0xa1,
-		0x07, 0xa3, 0x38,   -1,
-		0xe
+		-1, -1, -1, -1,
+		-1, -1, -1, -1,
+		-1, -1, -1, -1,
+		0x07, 0xa3, -1,   -1,
+		-1
 	};
+
 	u8 value = 0xff;
 
 	if (smb349_config(priv, 1)) {
@@ -656,11 +659,11 @@ static void smb349_irq_worker(struct work_struct *work)
 	u8 value = 0xff;
 	int ret = -1;
 	int idx = 0;
+	int disconnected = 0;
+
 	struct smb349_priv *priv = container_of(work,
 				struct smb349_priv, irq_work.work);
-
 	BUG_ON(!priv);
-
 	/* Check interrupt status E (disconnect) register first */
 	ret = smb349_i2c_read(priv->i2c_client, SMB349_INTSTAT_REG_E, &value);
 
@@ -671,9 +674,15 @@ static void smb349_irq_worker(struct work_struct *work)
 		dev_dbg(priv->dev,
 			"INTSTAT_REG_E is %02x\n", value);
 
-		if ((atomic_read(&priv->ac_online) |
-				atomic_read(&priv->usb_online))
-			&& (value & (1 << 0))) {
+		disconnected = (value & SMB349_INTSTAT_E_UV_STATUS);
+
+		/* If the cable is not present, run disconnect routine
+		   if the irq is still enabled or if we have not already
+		   run the disconnect routine */
+		if (((value & SMB349_INTSTAT_E_UV) |
+				atomic_read(&priv->ac_online) |
+				atomic_read(&priv->usb_online)) &&
+			disconnected) {
 			dev_info(priv->dev,
 				"USB disconnected\n");
 
@@ -795,19 +804,24 @@ static void smb349_irq_worker(struct work_struct *work)
 			power_supply_changed(&priv->ac);
 		}
 
-		/* Check for APSD status */
-		if (value & SMB349_INTSTAT_D_APSD_CMPL) {
-			if (!SMB349_IS_APSD_DONE(value)) {
-				dev_warn(priv->dev, "Spurious APSD IRQ!\n");
-			} else {
-				smb349_apsd_complete(priv);
+		/* Don't handle charger detect IRQs if cable has already been
+		   unplugged */
+		if (!disconnected) {
+			/* Check for APSD status */
+			if (value & SMB349_INTSTAT_D_APSD_CMPL) {
+				if (!SMB349_IS_APSD_DONE(value)) {
+					dev_warn(priv->dev,
+						"Spurious APSD IRQ!\n");
+				} else {
+					smb349_apsd_complete(priv);
+				}
 			}
-		}
 
-		/* Check for AICL status */
-		if ((value & SMB349_INTSTAT_D_AICL_CMPL) &&
-			SMB349_IS_AICL_DONE(value)) {
-			smb349_aicl_complete(priv);
+			/* Check for AICL status */
+			if ((value & SMB349_INTSTAT_D_AICL_CMPL) &&
+				SMB349_IS_AICL_DONE(value)) {
+				smb349_aicl_complete(priv);
+			}
 		}
 	}
 
@@ -827,8 +841,44 @@ static void smb349_irq_worker(struct work_struct *work)
 	if (priv->polling_mode)
 		schedule_delayed_work(&priv->irq_work, msecs_to_jiffies(1000));
 	else
-		enable_irq(gpio_to_irq(priv->chrg_stat));
+		enable_irq(priv->irq);
 
+	ret = smb349_i2c_read(priv->i2c_client, SMB349_INTSTAT_REG_F, &value);
+
+	if (ret) {
+		dev_warn(priv->dev,
+				"Failed to read SMB349_INTSTAT_REG_F: %d\n", ret);
+	} else {
+		dev_dbg(priv->dev,
+				"INTSTAT_REG_F is %02x\n", value);
+		if (!disconnected) {
+			if (!SMB349_IS_POWER_OK(value)) {
+				atomic_set(&priv->ac_online, 0);
+				atomic_set(&priv->usb_online, 0);
+				power_supply_changed(&priv->usb);
+				power_supply_changed(&priv->ac);
+				power_supply_set_present(priv->dwc3_usb, 0);
+				/* newer parts go back to defaults after unplug */
+				smb349_config_fixup(priv);
+				/* Locate the first smaller input current limit*/
+				for (idx = ARRAY_SIZE(smb349_input_current_limits) - 1; idx >= 0; idx--)
+					if (smb349_input_current_limits[idx] <= priv->current_limit)
+						break;
+				dev_info(priv->dev, "Change current_limt to [%d]\n", priv->current_limit);
+				if (idx < 0) {
+					dev_err(priv->dev, "Invalid current limit value\n");
+				} else {
+					if (smb349_change_current_limit(priv, idx)) {
+						dev_err(priv->dev, "Unable to change input current limit\n");
+					}
+				}
+			}
+		} else {
+			if (SMB349_IS_POWER_OK(value)) {
+				smb349_apsd_complete(priv);
+			}
+		}
+	}
 	priv->handle_irq = 0;
 }
 
@@ -836,10 +886,9 @@ static irqreturn_t smb349_irq(int irq, void *data)
 {
 	struct smb349_priv *priv = (struct smb349_priv *)data;
 
-	disable_irq_nosync(gpio_to_irq(priv->chrg_stat));
+	disable_irq_nosync(priv->irq);
 
 	priv->handle_irq = 1;
-
 	/* Need to wait until i2c susbsytem is resumed */
 	if (!atomic_read(&priv->suspended)) {
 		/* Scrub through the registers to ack any interrupts */
@@ -2160,15 +2209,15 @@ static int smb349_probe(struct i2c_client *client,
 		gpio_request(priv->chrg_stat, "chrg_stat");
 		gpio_direction_input(priv->chrg_stat);
 
-		if (request_irq(gpio_to_irq(priv->chrg_stat),
+		priv->irq = gpio_to_irq(priv->chrg_stat);
+
+		if (request_irq(priv->irq,
 				smb349_irq,
 				IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 				"smb349_irq", priv)) {
 			dev_err(priv->dev, "Unable to set up threaded IRQ\n");
 			goto err1;
 		}
-
-		priv->irq = gpio_to_irq(priv->chrg_stat);
 
 		enable_irq_wake(priv->irq);  /* this will make the irq wakeupable */
 

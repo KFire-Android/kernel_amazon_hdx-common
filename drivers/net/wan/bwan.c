@@ -940,6 +940,13 @@ static int __devexit bwan_remove(struct platform_device *pdev)
 	return misc_deregister(&bwan_modem_misc);
 }
 
+static void bwan_shutdown(struct platform_device *pdev)
+{
+	printk(KERN_INFO "bwan shutdown\n");
+	gpio_direction_output(gpio_wan_usb_en, 0);
+	bwan_pulse_gpio_wan_shutdown(POWER_OFF_HOLD_TIME);
+}
+
 static int bwan_suspend(struct platform_device *pdev,
 			pm_message_t state)
 {
@@ -971,6 +978,7 @@ static struct platform_driver bwan_driver = {
 	.resume  = bwan_resume,
 	.probe   = bwan_probe,
 	.remove  = bwan_remove,
+	.shutdown = bwan_shutdown,
 };
 
 static int __init bwan_init(void)

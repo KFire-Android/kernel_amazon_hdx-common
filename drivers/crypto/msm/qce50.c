@@ -3444,21 +3444,6 @@ err_clk:
 
 void qce_suspend(void *p)
 {
-	int	ret = 0;
-	struct qce_device *pce_dev = (struct qce_device *)p;
-	if (!pce_dev)
-		return;
-
-	ret = qce_enable_clk(p);
-	if (ret) {
-		pr_err("%s Unable enable clk\n", __func__);
-		return;
-	}
-
-	qce_sps_exit_ep_conn(pce_dev, &pce_dev->ce_sps.consumer);
-	qce_sps_exit_ep_conn(pce_dev, &pce_dev->ce_sps.producer);
-
-	qce_disable_clk(p);
 	return;
 
 }
@@ -3466,24 +3451,6 @@ EXPORT_SYMBOL(qce_suspend);
 
 void qce_resume(void *p)
 {
-	int	ret = 0;
-	struct qce_device *pce_dev = (struct qce_device *)p;
-	if (!pce_dev)
-		return;
-
-	ret = qce_enable_clk(p);
-	if (ret) {
-		pr_err("%s Unable enable clk.\n", __func__);
-		return;
-	}
-	ret = qce_sps_init(pce_dev);
-	if (ret) {
-		pr_err("%s Unable init sps.\n", __func__);
-		return;
-	}
-	qce_init_ce_cfg_val(pce_dev);
-	qce_setup_ce_sps_data(pce_dev);
-	qce_disable_clk(p);
 
 }
 EXPORT_SYMBOL(qce_resume);

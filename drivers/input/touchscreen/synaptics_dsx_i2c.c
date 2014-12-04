@@ -230,11 +230,11 @@ struct synaptics_rmi4_exp_fn {
 
 static struct device_attribute attrs[] = {
 #ifdef CONFIG_HAS_EARLYSUSPEND
-	__ATTR(full_pm_cycle, (S_IRUGO | S_IWUGO),
+	__ATTR(full_pm_cycle, (S_IRUGO | S_IWUSR),
 			synaptics_rmi4_full_pm_cycle_show,
 			synaptics_rmi4_full_pm_cycle_store),
 #endif
-	__ATTR(reset, S_IWUGO,
+	__ATTR(reset, S_IWUSR,
 			synaptics_rmi4_show_error,
 			synaptics_rmi4_f01_reset_store),
 	__ATTR(productinfo, S_IRUGO,
@@ -249,7 +249,7 @@ static struct device_attribute attrs[] = {
 	__ATTR(flashprog, S_IRUGO,
 			synaptics_rmi4_f01_flashprog_show,
 			synaptics_rmi4_store_error),
-	__ATTR(0dbutton, (S_IRUGO | S_IWUGO),
+	__ATTR(0dbutton, (S_IRUGO | S_IWUSR),
 			synaptics_rmi4_0dbutton_show,
 			synaptics_rmi4_0dbutton_store),
 };
