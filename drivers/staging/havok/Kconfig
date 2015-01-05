@@ -1,0 +1,9 @@
+config HAVOK
+	bool "Long term low overhead logging"
+	default n
+	help
+		This enabled the core of the Havok logging
+		framework. All Havok functionality except
+		that which is not needed by all users or
+		has extra overhead is enabled.
+
