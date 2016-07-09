@@ -153,6 +153,7 @@ void ping_unhash(struct sock *sk)
 	if (sk_hashed(sk)) {
 		write_lock_bh(&ping_table.lock);
 		hlist_nulls_del(&sk->sk_nulls_node);
+		sk_nulls_node_init(&sk->sk_nulls_node);
 		sock_put(sk);
 		isk->inet_num = 0;
 		isk->inet_sport = 0;
@@ -256,6 +257,9 @@ int ping_init_sock(struct sock *sk)
 
 	if (sk->sk_family == AF_INET6)
 		inet6_sk(sk)->ipv6only = 1;
+
+	if (sk->sk_family == AF_INET6)
+                inet6_sk(sk)->ipv6only = 1;
 
 	inet_get_ping_group_range_net(net, range, range+1);
 	if (range[0] <= group && group <= range[1])
