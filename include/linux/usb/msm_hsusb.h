@@ -509,6 +509,8 @@ struct ci13xxx_platform_data {
  * @phy_sof_workaround: Enable ALL PHY SOF bug related workarounds for
 		SUSPEND, RESET and RESUME.
  * @phy_susp_sof_workaround: Enable PHY SOF workaround only for SUSPEND.
+ * @dis_internal_clk_gating: if set, internal clock gating in controller
+ * 			is disabled
  *
  */
 struct msm_hsic_host_platform_data {
@@ -516,8 +518,12 @@ struct msm_hsic_host_platform_data {
 	unsigned data;
 	bool ignore_cal_pad_config;
 	bool phy_sof_workaround;
+#if defined(CONFIG_ARCH_MSM8974_THOR) || defined(CONFIG_ARCH_MSM8974_APOLLO)
+	bool dis_internal_clk_gating;
+#endif
 	bool phy_susp_sof_workaround;
 #if defined(CONFIG_ARCH_MSM8974_THOR) || defined(CONFIG_ARCH_MSM8974_APOLLO)
+	bool phy_reset_sof_workaround;
 	bool enable_autoresume;
 #endif
 	u32 reset_delay;
